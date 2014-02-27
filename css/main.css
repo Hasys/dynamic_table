@@ -1,0 +1,6 @@
+TABLE, TD, TH {
+	border: 1px #000 solid;
+	padding: 0;
+	margin: 0;
+	border-collapse: collapse;
+}
