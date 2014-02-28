@@ -1,6 +1,32 @@
+HTML, BODY{
+	height: 100%;
+}
 TABLE, TD, TH {
 	border: 1px #000 solid;
 	padding: 0;
 	margin: 0;
 	border-collapse: collapse;
+}
+TH {
+
+}
+.cursor-pointer {
+	cursor: pointer;
+}
+
+.cursor-move {
+	cursor: move;
+}
+
+.down{
+	background-color: red;
+}
+
+.text-not-selectable {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
