@@ -30,3 +30,9 @@ TH {
 	-ms-user-select: none;
 	user-select: none;
 }
+
+.drugged-div {
+	position:absolute;
+	background-color: yellow;
+	border: 1px #7e7e7e dotted;
+}
