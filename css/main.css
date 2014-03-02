@@ -38,5 +38,5 @@ TH {
 .draggable-div {
 	position:absolute;
 	background-color: yellow;
-	border: 1px #7e7e7e dotted;
+	border: 1px #7e7e7e solid;
 }

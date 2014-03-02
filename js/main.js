@@ -57,12 +57,22 @@ var dynamic_table_factory = function(id){
 		body.classList.add('cursor-move');
 
 		draggableDiv.style.display = 'block';
-		var border = 2; //Two times width of borders in px
-		draggableDiv.style.width = ( this.offsetWidth - border )+'px';
-		draggableDiv.style.height = ( this.offsetHeight - border )+'px';
+		draggableDiv.style.width = ( this.offsetWidth )+'px';
+		//draggableDiv.style.height = ( this.offsetHeight - border )+'px';
 		draggableDiv.style.left = event.x+'px';
 		draggableDiv.style.top = event.y+'px';
-		draggableDiv.innerHTML = this.innerHTML;
+
+		var rowsTmp = table.getElementsByTagName('tr');
+		draggableDiv.innerHTML = '';
+		for( i=0; i<rowsTmp.length; i++ ){
+			var element = document.createElement('div');
+			if( i!=0 )
+				element.style.borderTop = '1px #7e7e7e dotted';
+			if(rowsTmp[i].children[draggingHeaderID] !== undefined)
+				element.innerHTML = rowsTmp[i].children[draggingHeaderID].innerHTML;
+			draggableDiv.appendChild(element);
+		}
+		
 
 		bindEvent( body, 'mouseup', bodyMouseUpEvent );
 		bindEvent( body, 'mousemove', bodyMouseMoveEvent, true );
