@@ -34,11 +34,35 @@ var dynamic_table_factory = function(id){
 		draggableDiv.style.top = (event.y +5)+'px'; //+5 for good looking and dragging
 	}
 
-	var headMouseOverEvent = function() {
+	var headMouseOverEvent = function( event ) {
 		this.classList.add('can-to-drop');
 	}
 	var headMouseOutEvent = function() {
 		this.classList.remove('can-to-drop');	
+	}
+
+	var headMouseMoveEvent = function( event ) {
+		var i = 0;
+		var node = this;
+		while (node = node.previousElementSibling)
+			++i;
+		if (i == draggingHeaderID)
+			return;
+		var halfOfWidth = Math.round(this.offsetWidth/2);
+
+		if( i < draggingHeaderID ) {
+			if( event.offsetX < halfOfWidth ) {
+				droppingID = i;
+				moveColumn();
+				draggingHeaderID = i;
+			}
+		} else {
+			if( event.offsetX > halfOfWidth ) {
+				droppingID = i+1;
+				moveColumn();
+				draggingHeaderID = i;
+			}
+		}
 	}
 
 	var headerMouseDownEvent = function( event ) {
@@ -50,6 +74,7 @@ var dynamic_table_factory = function(id){
 			} else {
 				bindEvent( hcells[i], 'mouseover', headMouseOverEvent );
 				bindEvent( hcells[i], 'mouseout', headMouseOutEvent );
+				bindEvent( hcells[i], 'mousemove', headMouseMoveEvent );
 			}
 		}
 
