@@ -10,7 +10,7 @@ var dynamic_table_factory = function(id){
 	var body = document.getElementsByTagName('body')[0];
 	var table = document.getElementById(id);
 	var hcells = table.getElementsByTagName('tr')[0].getElementsByTagName('th');
-	var draggingHeaderID = -1;
+	var draggableIndex = -1;
 	var droppingID = -1;
 
 	this.bindEvent = function(element, event, func) {
@@ -42,25 +42,33 @@ var dynamic_table_factory = function(id){
 	}
 
 	var headMouseMoveEvent = function( event ) {
-		var i = 0;
+		var currentNodeIndex = 0;
 		var node = this;
 		while (node = node.previousElementSibling)
-			++i;
-		if (i == draggingHeaderID)
+			++currentNodeIndex;
+		if (currentNodeIndex == draggableIndex)
 			return;
-		var halfOfWidth = Math.round(this.offsetWidth/2);
 
-		if( i < draggingHeaderID ) {
+		var halfOfWidth = Math.round(this.offsetWidth/2);
+		if( currentNodeIndex < draggableIndex ) {
 			if( event.offsetX < halfOfWidth ) {
-				droppingID = i;
+				droppingID = currentNodeIndex;
 				moveColumn();
-				draggingHeaderID = i;
+				draggableIndex = currentNodeIndex;
+			} else {
+				droppingID = currentNodeIndex + 1;
+				moveColumn();
+				draggableIndex = currentNodeIndex + 1;
 			}
 		} else {
 			if( event.offsetX > halfOfWidth ) {
-				droppingID = i+1;
+				droppingID = currentNodeIndex+1;
 				moveColumn();
-				draggingHeaderID = i;
+				draggableIndex = currentNodeIndex;
+			} else {
+				droppingID = currentNodeIndex;
+				moveColumn();
+				draggableIndex = currentNodeIndex-1;
 			}
 		}
 	}
@@ -70,7 +78,7 @@ var dynamic_table_factory = function(id){
 		for(i = 0; i < hcells.length; i++)	{
 			hcells[i].classList.add('cursor-move');
 			if( this == hcells[i] ) {
-				draggingHeaderID = i;
+				draggableIndex = i;
 			} else {
 				bindEvent( hcells[i], 'mouseover', headMouseOverEvent );
 				bindEvent( hcells[i], 'mouseout', headMouseOutEvent );
@@ -83,28 +91,25 @@ var dynamic_table_factory = function(id){
 
 		draggableDiv.style.display = 'block';
 		draggableDiv.style.width = ( this.offsetWidth )+'px';
-		//draggableDiv.style.height = ( this.offsetHeight - border )+'px';
 		draggableDiv.style.left = event.x+'px';
 		draggableDiv.style.top = event.y+'px';
 
 		var rowsTmp = table.getElementsByTagName('tr');
-		draggableDiv.innerHTML = '';
-		for( i=0; i<rowsTmp.length; i++ ){
+		for( i=0; i<rowsTmp.length && i<=3; i++ ) {
 			var element = document.createElement('div');
 			if( i!=0 )
 				element.style.borderTop = '1px #7e7e7e dotted';
-			if(rowsTmp[i].children[draggingHeaderID] !== undefined)
-				element.innerHTML = rowsTmp[i].children[draggingHeaderID].innerHTML;
+			if(rowsTmp[i].children[draggableIndex] !== undefined)
+				element.innerHTML = rowsTmp[i].children[draggableIndex].innerHTML;
 			draggableDiv.appendChild(element);
 		}
-		
 
 		bindEvent( body, 'mouseup', bodyMouseUpEvent );
 		bindEvent( body, 'mousemove', bodyMouseMoveEvent, true );
 	};
 
 	var moveColumn = function() {
-		if(droppingID == -1 || draggingHeaderID == -1) 
+		if(droppingID == -1 || draggableIndex == -1) 
 			return;
 		var rowsTmp = table.getElementsByTagName('tr');
 		var rows = new Array();
@@ -125,13 +130,13 @@ var dynamic_table_factory = function(id){
 			rows[j].innerHTML = '';
 
 			for( i = 0; i<droppingID; i++ ) {
-				if(i == draggingHeaderID) continue;
+				if(i == draggableIndex) continue;
 				rows[j].appendChild(tmpArr[i]);
 			}
-			if(tmpArr[draggingHeaderID] !== undefined)
-			rows[j].appendChild(tmpArr[draggingHeaderID]);
+			if(tmpArr[draggableIndex] !== undefined)
+			rows[j].appendChild(tmpArr[draggableIndex]);
 			for( i=droppingID; i<tmpArr.length; i++){
-				if(i == draggingHeaderID) continue;
+				if(i == draggableIndex) continue;
 				rows[j].appendChild(tmpArr[i]);
 			}
 		}
@@ -140,7 +145,6 @@ var dynamic_table_factory = function(id){
 	};
 
 	var bodyMouseUpEvent = function() {
-		//Styles section
 		for(i = 0; i < hcells.length; i++)	{
 			if (hcells[i].classList.contains('can-to-drop') ) {
 				droppingID = i;
@@ -148,21 +152,20 @@ var dynamic_table_factory = function(id){
 			hcells[i].classList.remove('down');
 			hcells[i].classList.remove('cursor-move');
 			hcells[i].classList.remove('can-to-drop');
+			unbindEvent( hcells[i], 'mousemove', headMouseMoveEvent );
 			unbindEvent( hcells[i], 'mouseover', headMouseOverEvent );
 			unbindEvent( hcells[i], 'mouseout', headMouseOutEvent )
 		}
 		body.classList.remove('text-not-selectable');
 		body.classList.remove('cursor-move');
 		
+		draggableDiv.innerHTML = '';
 		draggableDiv.style.display = 'none';
 
-		//Event section
 		unbindEvent( body, 'mouseup', bodyMouseUpEvent );
 		unbindEvent( body, 'mousemove', bodyMouseMoveEvent );
 
-		moveColumn();
-
-		draggingHeaderID = -1;
+		draggableIndex = -1;
 	};
 
 	for(i = 0; i < hcells.length; i++)	{
