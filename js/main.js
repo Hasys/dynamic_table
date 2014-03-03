@@ -34,13 +34,6 @@ var dynamic_table_factory = function(id){
 		draggableDiv.style.top = (event.y +5)+'px'; //+5 for good looking and dragging
 	}
 
-	var headMouseOverEvent = function( event ) {
-		this.classList.add('can-to-drop');
-	}
-	var headMouseOutEvent = function() {
-		this.classList.remove('can-to-drop');	
-	}
-
 	var headMouseMoveEvent = function( event ) {
 		var currentNodeIndex = 0;
 		var node = this;
@@ -80,8 +73,6 @@ var dynamic_table_factory = function(id){
 			if( this == hcells[i] ) {
 				draggableIndex = i;
 			} else {
-				bindEvent( hcells[i], 'mouseover', headMouseOverEvent );
-				bindEvent( hcells[i], 'mouseout', headMouseOutEvent );
 				bindEvent( hcells[i], 'mousemove', headMouseMoveEvent );
 			}
 		}
@@ -153,8 +144,6 @@ var dynamic_table_factory = function(id){
 			hcells[i].classList.remove('cursor-move');
 			hcells[i].classList.remove('can-to-drop');
 			unbindEvent( hcells[i], 'mousemove', headMouseMoveEvent );
-			unbindEvent( hcells[i], 'mouseover', headMouseOverEvent );
-			unbindEvent( hcells[i], 'mouseout', headMouseOutEvent )
 		}
 		body.classList.remove('text-not-selectable');
 		body.classList.remove('cursor-move');
@@ -164,8 +153,6 @@ var dynamic_table_factory = function(id){
 
 		unbindEvent( body, 'mouseup', bodyMouseUpEvent );
 		unbindEvent( body, 'mousemove', bodyMouseMoveEvent );
-
-		draggableIndex = -1;
 	};
 
 	for(i = 0; i < hcells.length; i++)	{

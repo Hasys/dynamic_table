@@ -22,10 +22,6 @@ TH {
 	background-color: red;
 }
 
-.can-to-drop {
-	background-color: green;
-}
-
 .text-not-selectable {
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
