@@ -45,23 +45,15 @@ var dynamic_table_factory = function(id){
 		var halfOfWidth = Math.round(this.offsetWidth/2);
 		if( currentNodeIndex < draggableIndex ) {
 			if( event.offsetX < halfOfWidth ) {
-				droppingID = currentNodeIndex;
-				moveColumn();
-				draggableIndex = currentNodeIndex;
+				moveColumn(draggableIndex, currentNodeIndex);
 			} else {
-				droppingID = currentNodeIndex + 1;
-				moveColumn();
-				draggableIndex = currentNodeIndex + 1;
+				moveColumn(draggableIndex, currentNodeIndex + 1);
 			}
 		} else {
 			if( event.offsetX > halfOfWidth ) {
-				droppingID = currentNodeIndex+1;
-				moveColumn();
-				draggableIndex = currentNodeIndex;
+				moveColumn(draggableIndex, currentNodeIndex);
 			} else {
-				droppingID = currentNodeIndex;
-				moveColumn();
-				draggableIndex = currentNodeIndex-1;
+				moveColumn(draggableIndex, currentNodeIndex-1);
 			}
 		}
 	}
@@ -99,37 +91,71 @@ var dynamic_table_factory = function(id){
 		bindEvent( body, 'mousemove', bodyMouseMoveEvent, true );
 	};
 
-	var moveColumn = function() {
-		if(droppingID == -1 || draggableIndex == -1) 
-			return;
-		var rowsTmp = table.getElementsByTagName('tr');
-		var rows = new Array();
-		for (i=0;i<rowsTmp.length;i++){
-			if (rowsTmp.item(i).nodeType==1)
-				rows.push(rowsTmp.item(i));
+	var moveColumn = function( from, to ) {
+		if(from==to) return;
+
+		var rows = table.getElementsByTagName('tr');
+		
+		var colspan = 0;
+		var colspans = new Array();
+		for( i=0; i<rows.length; i++) {
+			var children = (i==0)? rows[i].getElementsByTagName('th'): rows[i].getElementsByTagName('td');
+			var tmpTr = new Array(children.length);		
+			var tmpTo = 0;
+			var tmpFrom = 0;
 			
-		}
-
-		for(j = 0; j<rows.length; j++) {
-			var tmpArr = new Array();
-			var row = (j==0)? rows[j].getElementsByTagName('th') : rows[j].getElementsByTagName('td');
-			for (i=0;i<row.length;i++){
-				if (row.item(i).nodeType==1)
-					tmpArr.push(row.item(i));
+			for( j=0; j<children.length; j++ ) {
+				if( i==0 )
+					colspans[j]=children[j].colSpan;
+				if( j<to )
+					tmpTo+=colspans[j];
+				if( j<from )
+					tmpFrom += colspans[j];
 			}
 
-			rows[j].innerHTML = '';
+			tmpTo = (i==0)? to: tmpTo;
+			tmpFrom = (i==0)? from: tmpFrom;
+			
+			if( i==0 ) {
+				colspan = children[tmpFrom].colSpan;
+				tmpTr[tmpTo] = children[tmpFrom];
+				if(from<to){
+					var tmpColspan = colspans[to];
+					colspans[to] = colspans[from];
+					colspans[from] = tmpColspan;
+				}
+			} else {
+				for( j=0; j<colspan; j++) {
+					tmpTr[tmpTo+j] = children[tmpFrom+j];
+				}
+			}
+			
+			var j=0;
+			var index = 0;
+			while( j<children.length) {
+				
+				if( j==tmpFrom && i==0 ) {
+					j++;
+					continue;
+				} else if ( (j>=tmpFrom && j<tmpFrom+colspan) && (i!=0) ) {
+					j++;
+					continue;
+				}
 
-			for( i = 0; i<droppingID; i++ ) {
-				if(i == draggableIndex) continue;
-				rows[j].appendChild(tmpArr[i]);
+				if(tmpTr[index] !== undefined) {
+					index++;
+				} else {
+					tmpTr[index] = children[j];
+					j++;
+					index++;
+				}
 			}
-			if(tmpArr[draggableIndex] !== undefined)
-			rows[j].appendChild(tmpArr[draggableIndex]);
-			for( i=droppingID; i<tmpArr.length; i++){
-				if(i == draggableIndex) continue;
-				rows[j].appendChild(tmpArr[i]);
-			}
+
+			rows[i].innerHTML = '';
+			for( j=0; j<tmpTr.length; j++)
+				rows[i].appendChild(tmpTr[j]);
+
+			draggableIndex = to;
 		}
 
 		hcells = table.getElementsByTagName('tr')[0].getElementsByTagName('th');
