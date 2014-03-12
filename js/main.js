@@ -12,10 +12,24 @@ var dynamic_table_factory = function(id){
 	var hcells = table.getElementsByTagName('tr')[0].getElementsByTagName('th');
 	var ftmpcells = table.getElementsByTagName('tr')[0].childNodes;
 	var fcells = new Array();
+	var cursor = 0; //0 - neutral, 1 - horizontal, 2 - vertical
+
+	var firstCellsOfRows = new Array();
+	var tmpRows = table.getElementsByTagName('tr')
+	for( i=0; i<tmpRows.length; i++ ) {
+		var tmpChildren = tmpRows[i].childNodes;
+		for( j=0; j<tmpChildren.length; j++ )
+			if( tmpChildren[j].nodeType==1 ) {
+				firstCellsOfRows.push( tmpChildren[j] );
+				break;
+			}
+	}
+
 	var draggableIndex = -1;
 	var isResizing = false;
 	var droppingID = -1;
 	var startResizingWidth = -1;
+	var startResizingHeight = -1;
 	var base = 0;
 	var anothers;
 	var previous;
@@ -47,20 +61,35 @@ var dynamic_table_factory = function(id){
 		unbindEvent( body, 'mousemove', bodyMouseMoveResizeEvent);
 	}
 
+	var bodyMouseUpVerticalResizeStopEvent = function( event ) {
+		for( i=0; i<firstCellsOfRows.length; i++ )
+			unbindEvent( firstCellsOfRows[i], 'mouseup', bodyMouseUpVerticalResizeStopEvent);
+		body.classList.remove('text-not-selectable');
+		unbindEvent( body, 'mousemove', bodyMouseMoveVerticalResizeEvent );
+	}
+
 	var firstLineMouseDownEvent = function( event ) {
-		bindEvent( body, 'mouseup', bodyMouseUpResizeStopEvent);
+		bindEvent( body, 'mouseup', bodyMouseUpResizeStopEvent );
 		startResizingWidth = event.x;
 		previous = event.x;
 		base = this.offsetWidth;
 		resizing = this;
 		body.classList.add('text-not-selectable');
-		bindEvent( body, 'mousemove', bodyMouseMoveResizeEvent);
-		notResize = new Array(fcells.length);
+		bindEvent( body, 'mousemove', bodyMouseMoveResizeEvent );
+		notResize = new Array( fcells.length );
 		for( i=0; i<fcells.length; i++ ) {
 			if( fcells[i] != resizing )
 				notResize[i] = fcells[i].width;
 		}
+	}
 
+	var firstRowMouseDownEvent = function( event ) {
+		bindEvent( body, 'mouseup', bodyMouseUpVerticalResizeStopEvent );
+		body.classList.add('text-not-selectable');
+		bindEvent( body, 'mousemove', bodyMouseMoveVerticalResizeEvent );
+		startResizingHeight = event.y;
+		resizing = this;
+		base = this.offsetHeight;
 	}
 
 	var bodyMouseMoveResizeEvent = function( event ) {
@@ -75,9 +104,16 @@ var dynamic_table_factory = function(id){
 		previous = event.x;
 	}
 
-	var firstLineMouseMoveEvent = function ( event ) {
-		if( this.offsetWidth-event.offsetX<4 ){
+	var bodyMouseMoveVerticalResizeEvent = function( event ) {
+		resizing.height = (base + event.y - startResizingHeight)+'px';
+		console.log(base + event.y - startResizingHeight);
+		console.log(resizing);
+	}
+
+	var firstLineMouseMoveEvent = function( event ) {
+		if( this.offsetWidth-event.offsetX<4 ) {
 			this.style.cursor = 'ew-resize';
+			cursor = 2;
 			bindEvent( this, 'mousedown', firstLineMouseDownEvent);
 			for( i=0; i<hcells.length; i++ ) {
 				unbindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
@@ -89,6 +125,24 @@ var dynamic_table_factory = function(id){
 				bindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
 			}
 		}
+	}
+
+	var firstCellsOfRowsMouseMoveEvent = function( event ) {
+		if( this.offsetHeight-event.offsetY<4 ) {
+			this.style.cursor = 'ns-resize';
+			cursor = 1;
+			bindEvent( this, 'mousedown', firstRowMouseDownEvent);
+		} else {
+			if( cursor!=2 ) {
+				this.style.cursor = 'pointer';
+				cursor = 0;
+			}
+			unbindEvent( this, 'mousedown', firstRowMouseDownEvent);
+		}
+		if( this.offsetWidth-event.offsetX<4 || this.offsetHeight-event.offsetY<4 )
+			unbindEvent( firstCellsOfRows[0], 'mousedown', headerMouseDownEvent );
+		else
+			bindEvent( firstCellsOfRows[0], 'mousedown', headerMouseDownEvent );
 	}
 
 	var bodyMouseMoveEvent = function( event ) {
@@ -154,7 +208,15 @@ var dynamic_table_factory = function(id){
 	};
 
 	var moveColumn = function( from, to ) {
-		if(from==to) return;
+		if( from==to ) return;
+		var tmpHeight = new Array();
+		if( from==0 || to==0 ) {
+			for( i=0; i<firstCellsOfRows.length; i++ ) {
+				unbindEvent( firstCellsOfRows[i], 'mousemove', firstCellsOfRowsMouseMoveEvent );
+				tmpHeight.push( firstCellsOfRows[i].height );
+				firstCellsOfRows[i].height = '';
+			}
+		}
 
 		var rows = table.getElementsByTagName('tr');
 		
@@ -221,6 +283,22 @@ var dynamic_table_factory = function(id){
 		}
 
 		hcells = table.getElementsByTagName('tr')[0].getElementsByTagName('th');
+		if( from==0 || to==0 ) {
+			firstCellsOfRows.length = 0;
+			tmpRows = table.getElementsByTagName('tr')
+			for( i=0; i<tmpRows.length; i++ ) {
+				var tmpChildren = tmpRows[i].childNodes;
+				for( j=0; j<tmpChildren.length; j++ )
+					if( tmpChildren[j].nodeType==1 ) {
+						firstCellsOfRows.push( tmpChildren[j] );
+						break;
+					}
+			}
+			for( i=0; i<firstCellsOfRows.length; i++ ) {
+				bindEvent( firstCellsOfRows[i], 'mousemove', firstCellsOfRowsMouseMoveEvent );
+				firstCellsOfRows[i].height = tmpHeight[i]+'px';
+			}
+		}
 	};
 
 	var bodyMouseUpEvent = function() {
@@ -255,6 +333,12 @@ var dynamic_table_factory = function(id){
 			fcells.push(ftmpcells[i]);
 		}
 	}
+
+	for( i=0; i<firstCellsOfRows.length; i++ ) {
+		bindEvent( firstCellsOfRows[i], 'mousemove', firstCellsOfRowsMouseMoveEvent );
+		firstCellsOfRows[i].height = firstCellsOfRows[i].offsetHeight+'px';
+	}
+
 
 	if(!this.draggableDiv) {
 		this.draggableDiv = document.createElement('div');
