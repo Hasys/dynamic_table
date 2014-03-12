@@ -12,7 +12,6 @@ var dynamic_table_factory = function(id){
 	var hcells = table.getElementsByTagName('tr')[0].getElementsByTagName('th');
 	var ftmpcells = table.getElementsByTagName('tr')[0].childNodes;
 	var fcells = new Array();
-	var cursor = 0; //0 - neutral, 1 - horizontal, 2 - vertical
 
 	var firstCellsOfRows = new Array();
 	var tmpRows = table.getElementsByTagName('tr')
@@ -28,8 +27,7 @@ var dynamic_table_factory = function(id){
 	var draggableIndex = -1;
 	var isResizing = false;
 	var droppingID = -1;
-	var startResizingWidth = -1;
-	var startResizingHeight = -1;
+	var startResizing = -1;
 	var base = 0;
 	var anothers;
 	var previous;
@@ -43,7 +41,7 @@ var dynamic_table_factory = function(id){
 		}
 	};
 
-	this.unbindEvent = function(element, event, func) {
+	this.unbindEvent = function( element, event, func ) {
 		if( element.removeEventListener ) {
 			element.removeEventListener( event, func, false );
 		} else if ( element.detachEvent ) {
@@ -53,24 +51,24 @@ var dynamic_table_factory = function(id){
 
 	var bodyMouseUpResizeStopEvent = function( event ) {
 		for( i=0; i<fcells.length; i++ ) {
-			if( fcells[i].nodeType == 1 )
-				unbindEvent( fcells[i], 'mouseup', bodyMouseUpResizeStopEvent);
+			if( fcells[i].nodeType==1 )
+				unbindEvent( fcells[i], 'mouseup', bodyMouseUpResizeStopEvent );
 		}
 		isResizing = false;
-		body.classList.remove('text-not-selectable');
-		unbindEvent( body, 'mousemove', bodyMouseMoveResizeEvent);
+		body.classList.remove( 'text-not-selectable' );
+		unbindEvent( body, 'mousemove', bodyMouseMoveResizeEvent );
 	}
 
 	var bodyMouseUpVerticalResizeStopEvent = function( event ) {
 		for( i=0; i<firstCellsOfRows.length; i++ )
-			unbindEvent( firstCellsOfRows[i], 'mouseup', bodyMouseUpVerticalResizeStopEvent);
-		body.classList.remove('text-not-selectable');
+			unbindEvent( firstCellsOfRows[i], 'mouseup', bodyMouseUpVerticalResizeStopEvent );
+		body.classList.remove('text-not-selectable' );
 		unbindEvent( body, 'mousemove', bodyMouseMoveVerticalResizeEvent );
 	}
 
 	var firstLineMouseDownEvent = function( event ) {
 		bindEvent( body, 'mouseup', bodyMouseUpResizeStopEvent );
-		startResizingWidth = event.x;
+		startResizing = event.x;
 		previous = event.x;
 		base = this.offsetWidth;
 		resizing = this;
@@ -87,15 +85,14 @@ var dynamic_table_factory = function(id){
 		bindEvent( body, 'mouseup', bodyMouseUpVerticalResizeStopEvent );
 		body.classList.add('text-not-selectable');
 		bindEvent( body, 'mousemove', bodyMouseMoveVerticalResizeEvent );
-		startResizingHeight = event.y;
+		startResizing = event.y;
 		resizing = this;
 		base = this.offsetHeight;
 	}
 
 	var bodyMouseMoveResizeEvent = function( event ) {
-		resizing.width = (base + event.x - startResizingWidth)+'px';
+		resizing.width = (base + event.x - startResizing)+'px';
 		table.width = (event.x -previous) + table.offsetWidth +'px';
-		console.log('column-width: '+resizing.width +' table-width: '+table.width);
 		for( i=0; i<fcells.length; i++ ) {
 			if( fcells[i].nodeType == 1 && fcells[i] != resizing ) {
 				fcells[i].width = notResize[i];
@@ -105,21 +102,16 @@ var dynamic_table_factory = function(id){
 	}
 
 	var bodyMouseMoveVerticalResizeEvent = function( event ) {
-		resizing.height = (base + event.y - startResizingHeight)+'px';
-		console.log(base + event.y - startResizingHeight);
-		console.log(resizing);
+		resizing.height = (base + event.y - startResizing)+'px';
 	}
 
 	var firstLineMouseMoveEvent = function( event ) {
 		if( this.offsetWidth-event.offsetX<4 ) {
-			this.style.cursor = 'ew-resize';
-			cursor = 2;
 			bindEvent( this, 'mousedown', firstLineMouseDownEvent);
 			for( i=0; i<hcells.length; i++ ) {
 				unbindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
 			}
 		} else {
-			this.style.cursor = 'pointer';
 			unbindEvent( this, 'mousedown', firstLineMouseDownEvent);
 			for( i=0; i<hcells.length; i++ ) {
 				bindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
@@ -129,14 +121,8 @@ var dynamic_table_factory = function(id){
 
 	var firstCellsOfRowsMouseMoveEvent = function( event ) {
 		if( this.offsetHeight-event.offsetY<4 ) {
-			this.style.cursor = 'ns-resize';
-			cursor = 1;
 			bindEvent( this, 'mousedown', firstRowMouseDownEvent);
 		} else {
-			if( cursor!=2 ) {
-				this.style.cursor = 'pointer';
-				cursor = 0;
-			}
 			unbindEvent( this, 'mousedown', firstRowMouseDownEvent);
 		}
 		if( this.offsetWidth-event.offsetX<4 || this.offsetHeight-event.offsetY<4 )
@@ -175,9 +161,8 @@ var dynamic_table_factory = function(id){
 	}
 
 	var headerMouseDownEvent = function( event ) {
-		this.classList.add('down');
+		this.classList.add( 'down' );
 		for(i = 0; i < hcells.length; i++)	{
-			hcells[i].classList.add('cursor-move');
 			if( this == hcells[i] ) {
 				draggableIndex = i;
 			} else {
@@ -186,7 +171,6 @@ var dynamic_table_factory = function(id){
 		}
 
 		body.classList.add('text-not-selectable');
-		body.classList.add('cursor-move');
 
 		draggableDiv.style.display = 'block';
 		draggableDiv.style.width = ( this.offsetWidth )+'px';
@@ -307,12 +291,10 @@ var dynamic_table_factory = function(id){
 				droppingID = i;
 			}
 			hcells[i].classList.remove('down');
-			hcells[i].classList.remove('cursor-move');
 			hcells[i].classList.remove('can-to-drop');
 			unbindEvent( hcells[i], 'mousemove', headMouseMoveEvent );
 		}
 		body.classList.remove('text-not-selectable');
-		body.classList.remove('cursor-move');
 		
 		draggableDiv.innerHTML = '';
 		draggableDiv.style.display = 'none';
@@ -322,7 +304,6 @@ var dynamic_table_factory = function(id){
 	};
 
 	for( i=0; i<hcells.length; i++ ) {
-		hcells[i].classList.add('cursor-pointer');
 		bindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
 	}
 
