@@ -10,15 +10,16 @@ var dynamic_table_factory = function(id){
 	var body = document.getElementsByTagName('body')[0];
 	var table = document.getElementById(id);
 	var hcells = table.getElementsByTagName('tr')[0].getElementsByTagName('th');
-	var fcells = table.getElementsByTagName('tr')[0].childNodes;
+	var ftmpcells = table.getElementsByTagName('tr')[0].childNodes;
+	var fcells = new Array();
 	var draggableIndex = -1;
 	var isResizing = false;
 	var droppingID = -1;
 	var startResizingWidth = -1;
 	var base = 0;
-	var resizing;
-	var sizeOfTable;
 	var anothers;
+	var previous;
+	var notResize;
 
 	this.bindEvent = function(element, event, func) {
 		if( element.addEventListener ) {
@@ -43,35 +44,49 @@ var dynamic_table_factory = function(id){
 		}
 		isResizing = false;
 		body.classList.remove('text-not-selectable');
+		unbindEvent( body, 'mousemove', bodyMouseMoveResizeEvent);
 	}
 
 	var firstLineMouseDownEvent = function( event ) {
 		bindEvent( body, 'mouseup', bodyMouseUpResizeStopEvent);
 		startResizingWidth = event.x;
+		previous = event.x;
 		base = this.offsetWidth;
 		resizing = this;
 		body.classList.add('text-not-selectable');
-		isResizing = true;
-		sizeOfTable = table.offsetWidth;
+		bindEvent( body, 'mousemove', bodyMouseMoveResizeEvent);
+		notResize = new Array(fcells.length);
+		for( i=0; i<fcells.length; i++ ) {
+			if( fcells[i] != resizing )
+				notResize[i] = fcells[i].width;
+		}
+
+	}
+
+	var bodyMouseMoveResizeEvent = function( event ) {
+		resizing.width = (base + event.x - startResizingWidth)+'px';
+		table.width = (event.x -previous) + table.offsetWidth +'px';
+		console.log('column-width: '+resizing.width +' table-width: '+table.width);
+		for( i=0; i<fcells.length; i++ ) {
+			if( fcells[i].nodeType == 1 && fcells[i] != resizing ) {
+				fcells[i].width = notResize[i];
+			}
+		}
+		previous = event.x;
 	}
 
 	var firstLineMouseMoveEvent = function ( event ) {
-		if( isResizing ) {
-			resizing.width = (base + event.x - startResizingWidth)+'px';
-			table.width = (sizeOfTable + event.x - startResizingWidth)+'px';
+		if( this.offsetWidth-event.offsetX<4 ){
+			this.style.cursor = 'ew-resize';
+			bindEvent( this, 'mousedown', firstLineMouseDownEvent);
+			for( i=0; i<hcells.length; i++ ) {
+				unbindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
+			}
 		} else {
-			if( this.offsetWidth-event.offsetX<4 ){
-				this.style.cursor = 'ew-resize';
-				bindEvent( this, 'mousedown', firstLineMouseDownEvent);
-				for( i=0; i<hcells.length; i++ ) {
-					unbindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
-				}
-			} else {
-				this.style.cursor = 'pointer';
-				unbindEvent( this, 'mousedown', firstLineMouseDownEvent);
-				for( i=0; i<hcells.length; i++ ) {
-					bindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
-				}
+			this.style.cursor = 'pointer';
+			unbindEvent( this, 'mousedown', firstLineMouseDownEvent);
+			for( i=0; i<hcells.length; i++ ) {
+				bindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
 			}
 		}
 	}
@@ -233,9 +248,12 @@ var dynamic_table_factory = function(id){
 		bindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
 	}
 
-	for( i=0; i<fcells.length; i++ ) {
-		if( fcells[i].nodeType == 1 )
-			bindEvent( fcells[i], 'mousemove', firstLineMouseMoveEvent );
+	for( i=0; i<ftmpcells.length; i++ ) {
+		if( ftmpcells[i].nodeType == 1 ) {
+			bindEvent( ftmpcells[i], 'mousemove', firstLineMouseMoveEvent );
+			ftmpcells[i].width = ftmpcells[i].offsetWidth+'px';
+			fcells.push(ftmpcells[i]);
+		}
 	}
 
 	if(!this.draggableDiv) {

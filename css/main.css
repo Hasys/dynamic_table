@@ -6,6 +6,7 @@ TABLE, TD, TH {
 	padding: 0;
 	margin: 0;
 	border-collapse: collapse;
+	vertical-align: baseline;
 }
 TH {
 
