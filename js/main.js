@@ -10,8 +10,15 @@ var dynamic_table_factory = function(id){
 	var body = document.getElementsByTagName('body')[0];
 	var table = document.getElementById(id);
 	var hcells = table.getElementsByTagName('tr')[0].getElementsByTagName('th');
+	var fcells = table.getElementsByTagName('tr')[0].childNodes;
 	var draggableIndex = -1;
+	var isResizing = false;
 	var droppingID = -1;
+	var startResizingWidth = -1;
+	var base = 0;
+	var resizing;
+	var sizeOfTable;
+	var anothers;
 
 	this.bindEvent = function(element, event, func) {
 		if( element.addEventListener ) {
@@ -28,6 +35,46 @@ var dynamic_table_factory = function(id){
 			element.detachEvent( 'on'+event, func );
 		}
 	};
+
+	var bodyMouseUpResizeStopEvent = function( event ) {
+		for( i=0; i<fcells.length; i++ ) {
+			if( fcells[i].nodeType == 1 )
+				unbindEvent( fcells[i], 'mouseup', bodyMouseUpResizeStopEvent);
+		}
+		isResizing = false;
+		body.classList.remove('text-not-selectable');
+	}
+
+	var firstLineMouseDownEvent = function( event ) {
+		bindEvent( body, 'mouseup', bodyMouseUpResizeStopEvent);
+		startResizingWidth = event.x;
+		base = this.offsetWidth;
+		resizing = this;
+		body.classList.add('text-not-selectable');
+		isResizing = true;
+		sizeOfTable = table.offsetWidth;
+	}
+
+	var firstLineMouseMoveEvent = function ( event ) {
+		if( isResizing ) {
+			resizing.width = (base + event.x - startResizingWidth)+'px';
+			table.width = (sizeOfTable + event.x - startResizingWidth)+'px';
+		} else {
+			if( this.offsetWidth-event.offsetX<4 ){
+				this.style.cursor = 'ew-resize';
+				bindEvent( this, 'mousedown', firstLineMouseDownEvent);
+				for( i=0; i<hcells.length; i++ ) {
+					unbindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
+				}
+			} else {
+				this.style.cursor = 'pointer';
+				unbindEvent( this, 'mousedown', firstLineMouseDownEvent);
+				for( i=0; i<hcells.length; i++ ) {
+					bindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
+				}
+			}
+		}
+	}
 
 	var bodyMouseMoveEvent = function( event ) {
 		draggableDiv.style.left = (event.x +5)+'px'; //+5 for good looking and dragging
@@ -181,9 +228,14 @@ var dynamic_table_factory = function(id){
 		unbindEvent( body, 'mousemove', bodyMouseMoveEvent );
 	};
 
-	for(i = 0; i < hcells.length; i++)	{
+	for( i=0; i<hcells.length; i++ ) {
 		hcells[i].classList.add('cursor-pointer');
 		bindEvent( hcells[i], 'mousedown', headerMouseDownEvent );
+	}
+
+	for( i=0; i<fcells.length; i++ ) {
+		if( fcells[i].nodeType == 1 )
+			bindEvent( fcells[i], 'mousemove', firstLineMouseMoveEvent );
 	}
 
 	if(!this.draggableDiv) {
